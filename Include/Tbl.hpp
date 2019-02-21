@@ -24,13 +24,35 @@ THE SOFTWARE.
 
 #pragma once
 
+// Platform definitions
+#if defined(_WIN32) || defined(_WIN64)
+#define TBL_WINDOWS
+#define USE_FROM_CHARS
+#pragma warning(push)
+#pragma warning(disable : 4530) // Silence warnings if exceptions are disabled
+#endif
+
+#if defined(__linux__) || defined(__linux)
+#define TBL_LINUX
+#endif
+
+#ifdef __APPLE__
+#ifdef __MACH__
+#define TBL_MACOS
+#endif
+#endif
+
 #include <cassert>
 #include <variant>
 #include <string>
 #include <string_view>
 #include <vector>
 #include <unordered_map>
+#ifdef USE_FROM_CHARS
 #include <charconv>
+#else
+#include <cstdlib>
+#endif
 
 namespace Tbl
 {
@@ -160,7 +182,39 @@ namespace Tbl
 			m_numColumns = index;
 			return !m_columnMap.empty();
 		}
+        
+        bool ParseInteger(const String& str, int64_t& intValue)
+        {
+#ifdef USE_FROM_CHARS
+            auto result = std::from_chars(str.data(), str.data() + str.size(), intValue);
+            if (result.ptr == str.data() + str.size())
+                return true;
+            return false;
+#else
+            char * endPtr;
+            intValue = strtoll(str.data(), &endPtr, 10);
+            if (endPtr != (str.data() + str.size()))
+                return false;
+            return true;
+#endif
+        }
 
+        bool ParseDouble(const String& str, double& doubleValue)
+        {
+#ifdef USE_FROM_CHARS
+            result = std::from_chars(str.data(), str.data() + str.size(), doubleValue);
+            if (result.ptr == str.data() + str.size())
+                return true;
+            return false;
+#else
+            char * endPtr;
+            doubleValue = strtod(str.data(), &endPtr);
+            if (endPtr != (str.data() + str.size()))
+                return false;
+            return true;
+#endif
+        }
+        
 		bool ReadRow()
 		{
 			// Read the row header (first column)
@@ -195,16 +249,14 @@ namespace Tbl
 				{
 					String str(begin, m_current);
 					int64_t intValue = 0;
-					auto result = std::from_chars(str.data(), str.data() + str.size(), intValue);
-					if (result.ptr == str.data() + str.size())
+                    if (ParseInteger(str, intValue))
 					{
 						m_tableData.push_back(intValue);
 					}
 					else
 					{
 						double doubleValue = 0.0;
-						result = std::from_chars(str.data(), str.data() + str.size(), doubleValue);
-						if (result.ptr == str.data() + str.size())
+                        if (ParseDouble(str, doubleValue))
 						{
 							m_tableData.push_back(doubleValue);
 						}
