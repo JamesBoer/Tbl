@@ -46,12 +46,15 @@ THE SOFTWARE.
 #include <variant>
 #include <string>
 #include <string_view>
-#include <vector>
 #include <unordered_map>
 #ifdef USE_FROM_CHARS
 #include <charconv>
 #else
 #include <cstdlib>
+#endif
+
+#ifdef TBL_WINDOWS
+#pragma warning(pop)
 #endif
 
 namespace Tbl
@@ -108,17 +111,12 @@ namespace Tbl
 		template <typename T>
 		T Get(size_t rowIndex, size_t columnIndex)
 		{
-			assert(!m_error);
-			assert(rowIndex < m_numRows);
-			assert(columnIndex < m_numColumns);
-			size_t index = columnIndex + (rowIndex * m_numColumns);
-			assert(index < m_tableData.size());
-			return std::get<T>(m_tableData[index]);
+			return std::get<T>(GetData(rowIndex, columnIndex));
 		}
 		template <typename T>
 		T Get(const String& rowName, const String& columnName)
 		{
-			return Get<T>(GetRowIndex(rowName), GetColumnIndex(columnName));
+			return std::get<T>(GetData(GetRowIndex(rowName), GetColumnIndex(columnName)));
 		}
 
 	private:
