@@ -116,7 +116,7 @@ namespace Tbl
 		template <typename T>
 		T Get(const String& rowName, const String& columnName)
 		{
-			return Get<T>(GetRowIndex(rowName), GetColumnIndex(columnName));
+			return std::get<T>(GetData(GetRowIndex(rowName), GetColumnIndex(columnName)));
 		}
 
 	private:
