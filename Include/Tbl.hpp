@@ -46,6 +46,7 @@ THE SOFTWARE.
 #include <variant>
 #include <string>
 #include <string_view>
+#include <vector>
 #include <unordered_map>
 #ifdef USE_FROM_CHARS
 #include <charconv>
@@ -180,7 +181,7 @@ namespace Tbl
 			m_numColumns = index;
 			return !m_columnMap.empty();
 		}
-        
+
         bool ParseInteger(const String& str, int64_t& intValue)
         {
 #ifdef USE_FROM_CHARS
@@ -212,7 +213,7 @@ namespace Tbl
             return true;
 #endif
         }
-        
+
 		bool ReadRow()
 		{
 			// Read the row header (first column)
@@ -318,7 +319,7 @@ namespace Tbl
 		char m_delimiter = 0;
 
 	};
-	
+
 }
 
 

@@ -106,7 +106,11 @@ TEST_CASE("Test Tables", "[Tables]")
 
 	SECTION("Tab-Delimited Table Test From File")
 	{
+	#ifdef TBL_WINDOWS
 		auto tableText = LoadTestData("../../../Data/Test1.txt");
+	#else
+		auto tableText = LoadTestData("../../../../Data/Test1.txt");
+	#endif
 		Table t(tableText);
 		REQUIRE(t);
 		REQUIRE(t.GetNumColumns() == 4);
@@ -115,7 +119,11 @@ TEST_CASE("Test Tables", "[Tables]")
 
 	SECTION("Comma-Delimited Table Test From File")
 	{
+	#ifdef TBL_WINDOWS
 		auto tableText = LoadTestData("../../../Data/Test1.csv");
+	#else
+		auto tableText = LoadTestData("../../../../Data/Test1.csv");
+	#endif
 		Table t(tableText);
 		REQUIRE(t);
 		REQUIRE(t.GetNumColumns() == 4);
