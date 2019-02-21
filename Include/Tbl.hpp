@@ -202,7 +202,7 @@ namespace Tbl
         bool ParseDouble(const String& str, double& doubleValue)
         {
 #ifdef USE_FROM_CHARS
-            result = std::from_chars(str.data(), str.data() + str.size(), doubleValue);
+            auto result = std::from_chars(str.data(), str.data() + str.size(), doubleValue);
             if (result.ptr == str.data() + str.size())
                 return true;
             return false;
