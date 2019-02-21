@@ -104,4 +104,21 @@ TEST_CASE("Test Tables", "[Tables]")
 
 	}
 
+	SECTION("Tab-Delimited Table Test From File")
+	{
+		auto tableText = LoadTestData("../../../Data/Test1.txt");
+		Table t(tableText);
+		REQUIRE(t);
+		REQUIRE(t.GetNumColumns() == 4);
+		REQUIRE(t.GetNumRows() == 3);
+	}
+
+	SECTION("Comma-Delimited Table Test From File")
+	{
+		auto tableText = LoadTestData("../../../Data/Test1.csv");
+		Table t(tableText);
+		REQUIRE(t);
+		REQUIRE(t.GetNumColumns() == 4);
+		REQUIRE(t.GetNumRows() == 3);
+	}
 }

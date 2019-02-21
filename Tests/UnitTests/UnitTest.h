@@ -11,5 +11,5 @@ Copyright (c) 2019 James Boer
 
 #include "catch.hpp"
 
-std::string LoadTestData(std::string_view filename);
+std::string LoadTestData(const char* filename);
 

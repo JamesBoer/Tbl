@@ -6,12 +6,19 @@ Copyright (c) 2019 James Boer
 */
 
 #include "UnitTest.h"
+#include <fstream>
+#include <string>
+#include <sstream>
 
 using namespace Tbl;
 
 
-std::string LoadTestData([[maybe_unused]] std::string_view filename)
+std::string LoadTestData(const char* filename)
 {
-	return "";
+	std::ifstream f;
+	f.open(filename);
+	std::stringstream buffer;
+	buffer << f.rdbuf();
+	return buffer.str();
 }
 
