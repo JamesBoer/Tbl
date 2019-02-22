@@ -12,6 +12,7 @@ using String = Tbl::Table<>::String;
 
 TEST_CASE("Test Tables", "[Tables]")
 {
+
     SECTION("Tab-Delimited Table Test")
     {
 		static const char * tableText =
@@ -57,7 +58,7 @@ TEST_CASE("Test Tables", "[Tables]")
 		REQUIRE(t.Get<String>("Test Name C", "Text Field") == "Even more tests of text");
 
 	}
-
+	
 	SECTION("Comma-Delimited Table Test")
 	{
 		static const char * tableText =
@@ -104,29 +105,120 @@ TEST_CASE("Test Tables", "[Tables]")
 
 	}
 
-	SECTION("Tab-Delimited Table Test From File")
+	SECTION("Test Table No End-Line")
 	{
-	#ifdef TBL_WINDOWS
+		static const char * tableText =
+			"Name Field\tText Field\n"
+			"Test Name\tDo you read me?"
+			;
+
+		Table t(tableText);
+		REQUIRE(t);
+		REQUIRE(t.GetNumColumns() == 2);
+		REQUIRE(t.GetNumRows() == 1);
+		REQUIRE(t.Get<String>("Test Name", "Text Field") == "Do you read me?");
+	}
+
+    SECTION("Comma-Delimited Table With Commas")
+    {
+		static const char * tableText =
+			"Name Field,Text Field\n"
+			"Test Name A,\"Test 1, 2, 3\"\n"
+			"Test Name B,Test 4\n"
+			;
+
+		Table t(tableText);
+        REQUIRE(t);
+		REQUIRE(t.GetNumColumns() == 2);
+		REQUIRE(t.GetNumRows() == 2);
+		REQUIRE(t.Get<String>("Test Name A", "Text Field") == "Test 1, 2, 3");
+		REQUIRE(t.Get<String>("Test Name B", "Text Field") == "Test 4");
+	}
+
+	SECTION("Comma-Delimited Table With Quotes")
+	{
+		static const char * tableText =
+			"Name Field,Text Field\n"
+			"Test Name A,\"\"\"Quoted text\"\"\"\n"
+			;
+
+		Table t(tableText);
+		REQUIRE(t);
+		REQUIRE(t.GetNumColumns() == 2);
+		REQUIRE(t.GetNumRows() == 1);
+		REQUIRE(t.Get<String>("Test Name A", "Text Field") == "\"Quoted text\"");
+	}
+
+	SECTION("Comma-Delimited Table With Quotes and No Ending Newline")
+	{
+		static const char * tableText =
+			"Name Field,Text Field\n"
+			"Test Name A,\"\"\"Quoted text\"\"\""
+			;
+
+		Table t(tableText);
+		REQUIRE(t);
+		REQUIRE(t.GetNumColumns() == 2);
+		REQUIRE(t.GetNumRows() == 1);
+		REQUIRE(t.Get<String>("Test Name A", "Text Field") == "\"Quoted text\"");
+	}
+
+	SECTION("Tab-Delimited Table Test From File 1")
+	{
+#ifdef TBL_WINDOWS
 		auto tableText = LoadTestData("../../../Data/Test1.txt");
-	#else
+#else
 		auto tableText = LoadTestData("../../../../Data/Test1.txt");
-	#endif
+#endif
 		Table t(tableText);
 		REQUIRE(t);
 		REQUIRE(t.GetNumColumns() == 4);
 		REQUIRE(t.GetNumRows() == 3);
 	}
 
-	SECTION("Comma-Delimited Table Test From File")
+	SECTION("Comma-Delimited Table Test From File 1")
 	{
-	#ifdef TBL_WINDOWS
+#ifdef TBL_WINDOWS
 		auto tableText = LoadTestData("../../../Data/Test1.csv");
-	#else
+#else
 		auto tableText = LoadTestData("../../../../Data/Test1.csv");
-	#endif
+#endif
 		Table t(tableText);
 		REQUIRE(t);
 		REQUIRE(t.GetNumColumns() == 4);
 		REQUIRE(t.GetNumRows() == 3);
 	}
+
+	SECTION("Tab-Delimited Table Test From File 2")
+	{
+#ifdef TBL_WINDOWS
+		auto tableText = LoadTestData("../../../Data/Test2.txt");
+#else
+		auto tableText = LoadTestData("../../../../Data/Test2.txt");
+#endif
+		Table t(tableText);
+		REQUIRE(t);
+		REQUIRE(t.GetNumColumns() == 2);
+		REQUIRE(t.GetNumRows() == 3);
+		REQUIRE(t.Get<String>("Test Name A", "Text Field") == "Test 1, Test 2, Test 3");
+		REQUIRE(t.Get<String>("Test Name B", "Text Field") == "\"Quoted text\"");
+		REQUIRE(t.Get<String>("Test Name C", "Text Field") == "Try \"A, B, C\" for fun!");
+	}
+
+	SECTION("Comma-Delimited Table Test From File 2")
+	{
+#ifdef TBL_WINDOWS
+		auto tableText = LoadTestData("../../../Data/Test2.csv");
+#else
+		auto tableText = LoadTestData("../../../../Data/Test2.csv");
+#endif
+		Table t(tableText);
+		REQUIRE(t);
+		REQUIRE(t.GetNumColumns() == 2);
+		REQUIRE(t.GetNumRows() == 3);
+		REQUIRE(t.Get<String>("Test Name A", "Text Field") == "Test 1, Test 2, Test 3");
+		REQUIRE(t.Get<String>("Test Name B", "Text Field") == "\"Quoted text\"");
+		REQUIRE(t.Get<String>("Test Name C", "Text Field") == "Try \"A, B, C\" for fun!");
+	}
+
 }

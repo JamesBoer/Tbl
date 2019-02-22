@@ -82,8 +82,8 @@ namespace Tbl
 
 		explicit operator bool() const { return !m_error; }
 
-		size_t GetNumColumns() const { return m_numColumns; }
-		size_t GetNumRows() const { return m_numRows; }
+		size_t GetNumColumns() const { return m_columnMap.size(); }
+		size_t GetNumRows() const { return m_rowMap.size(); }
 		size_t GetRowIndex(const String& rowName) const
 		{
 			const auto& pair = m_rowMap.find(rowName);
@@ -99,9 +99,9 @@ namespace Tbl
 		TableData GetData(size_t rowIndex, size_t columnIndex)
 		{
 			assert(!m_error);
-			assert(rowIndex < m_numRows);
-			assert(columnIndex < m_numColumns);
-			size_t index = columnIndex + (rowIndex * m_numColumns);
+			assert(rowIndex < GetNumRows());
+			assert(columnIndex < GetNumColumns());
+			size_t index = columnIndex + (rowIndex * GetNumColumns());
 			assert(index < m_tableData.size());
 			return m_tableData[index];
 		}
@@ -122,64 +122,41 @@ namespace Tbl
 
 	private:
 
-		void AdvanceToNextLine()
+		bool IsLineEnd(std::string_view::const_iterator current) const
 		{
-			while (m_current != m_text.end())
+			return *current == '\n' || *current == '\r';
+		}
+
+		void AdvanceToNextLine(std::string_view text, std::string_view::const_iterator& current) const
+		{
+			while (current != text.end())
 			{
-				const char c = *m_current;
-				if (c == '\n' || c == '\r')
-					++m_current;
-				else
+				if (!IsLineEnd(current))
 					break;
+				++current;
 			}
 		}
 
-		bool DetectDelimiter()
+		bool DetectDelimiter(std::string_view text, char& delimiter) const
 		{
 			size_t tabCount = 0;
 			size_t commaCount = 0;
-			auto current = m_text.begin();
-			while (current != m_text.end())
+			auto current = text.begin();
+			while (current != text.end())
 			{
 				const char c = *current;
 				if (c == '\t')
 					++tabCount;
 				else if (c == ',')
 					++commaCount;
-				else if (c == '\n' || c == '\r')
+				else if (IsLineEnd(current))
 					break;
 				++current;
 			}
 			if (tabCount == commaCount)
 				return false;
-			m_delimiter = tabCount > commaCount ? '\t' : ',';
+			delimiter = tabCount > commaCount ? '\t' : ',';
 			return true;
-		}
-
-		bool ReadHeaderRow()
-		{
-			auto begin = m_text.begin();
-			size_t index = 0;
-			while (m_current != m_text.end())
-			{
-				const char c = *m_current;
-				if (c == m_delimiter || c == '\n' || c == '\r')
-				{
-					String name(begin, m_current);
-					m_columnMap.insert({name, index});
-					begin = m_current;
-					++index;
-					if (c != m_delimiter)
-						break;
-					++m_current;
-					begin = m_current;
-				}
-				else
-					++m_current;
-			}
-			AdvanceToNextLine();
-			m_numColumns = index;
-			return !m_columnMap.empty();
 		}
 
         bool ParseInteger(const String& str, int64_t& intValue)
@@ -214,82 +191,104 @@ namespace Tbl
 #endif
         }
 
-		bool ReadRow()
+		TableData ParseData(const String& str)
 		{
-			// Read the row header (first column)
-			size_t column = 0;
-			auto begin = m_current;
-			while (m_current != m_text.end())
+			int64_t intValue = 0;
+			if (ParseInteger(str, intValue))
+				return intValue;
+			else
 			{
-				const char c = *m_current;
-				if (c == m_delimiter)
-				{
-					// Add the first column as a lookup for the row number
-					String rowName(begin, m_current);
-					m_rowMap.insert({ rowName, m_numRows });
-					++m_numRows;
-					++m_current;
-					++column;
-					begin = m_current;
+				double doubleValue = 0.0;
+				if (ParseDouble(str, doubleValue))
+					return doubleValue;
+			}
+			return str;
+		}
 
-					// We also store it as the first element of the row
-					m_tableData.push_back(rowName);
-					break;
+		String ParseCell(std::string_view text, char delimiter, std::string_view::const_iterator& current) const
+		{
+			// Check if this cell is double-quoted
+			bool quoted = *current == '"';
+			if (quoted)
+				++current;
+
+			String str;
+			while (current != text.end())
+			{
+				const char c = *current;
+				if (quoted)
+				{
+					// Since this cell is double-quote delimited, proceed without checking delimiters until
+					// we see another double quote character.  
+					if (c == '"')
+					{
+						// Advance the iterator and check to see if it's followed by the end of file or
+						// delimiters.  If so, we're done parsing.  If not, a second double-quote should
+						// follow.
+						++current;
+						if (current == text.end() || *current == delimiter || IsLineEnd(current))
+							break;
+						// If this assert hits, your data is malformed, since an interior double-quote was not
+						// followed by a second quote
+						assert(*current == '"');
+					}
 				}
 				else
-					++m_current;
-			}
-
-			// Read the rest of the row
-			while (m_current != m_text.end())
-			{
-				const char c = *m_current;
-				if (c == m_delimiter || c == '\n' || c == '\r')
 				{
-					String str(begin, m_current);
-					int64_t intValue = 0;
-                    if (ParseInteger(str, intValue))
-					{
-						m_tableData.push_back(intValue);
-					}
-					else
-					{
-						double doubleValue = 0.0;
-                        if (ParseDouble(str, doubleValue))
-						{
-							m_tableData.push_back(doubleValue);
-						}
-						else
-						{
-							m_tableData.push_back(str);
-						}
-					}
-					if (c == m_delimiter)
-					{
-						++m_current;
-						begin = m_current;
-						++column;
-						if (column > m_numColumns)
-							return false;
-					}
-					else
-					{
-						AdvanceToNextLine();
+					// This isn't a quote-escaped cell, so long for normal delimiters
+					if (c == delimiter || IsLineEnd(current))
 						break;
-					}
 				}
-				else
-					++m_current;
+				str += c;
+				++current;
 			}
+			return str;
+		}
 
+		bool ReadHeader(std::string_view text, std::string_view::const_iterator& current, char delimiter)
+		{
+			while (current != text.end())
+			{
+				auto str = ParseCell(text, delimiter, current);
+				m_columnMap.insert({ str, m_columnMap.size() });
+				if (IsLineEnd(current))
+					break;
+				++current;
+			}
+			AdvanceToNextLine(text, current);
 			return true;
 		}
 
-		bool ReadRows()
+		bool ReadRow(std::string_view text, std::string_view::const_iterator& current, char delimiter)
 		{
-			while (m_current != m_text.end())
+			// Track column data
+			size_t column = 0;
+
+			// Make sure we don't parse past the end of the string data
+			while (current != text.end())
 			{
-				if (!ReadRow())
+				auto str = ParseCell(text, delimiter, current);
+				if (column == 0)
+				{
+					m_rowMap.insert({ str, m_rowMap.size() });
+					m_tableData.push_back(str);
+				}
+				else
+					m_tableData.push_back(ParseData(str));
+				++column;
+				if (current == text.end() || IsLineEnd(current))
+					break;
+				++current;
+			}
+			AdvanceToNextLine(text, current);
+			return column == GetNumColumns();
+		}
+
+		bool ReadRows(std::string_view text, std::string_view::const_iterator& current, char delimiter)
+		{
+			while (current != text.end())
+			{
+				if (!ReadRow(text, current, delimiter))
 					return false;
 			}
 			return true;
@@ -297,27 +296,21 @@ namespace Tbl
 
 		bool Read(std::string_view text)
 		{
-			m_text = text;
-			m_current = m_text.begin();
-			if (!DetectDelimiter())
+			char delimiter = 0;
+			if (!DetectDelimiter(text, delimiter))
 				return false;
-			if (!ReadHeaderRow())
+			std::string_view::const_iterator current = text.begin();
+			if (!ReadHeader(text, current, delimiter))
 				return false;
-			if (!ReadRows())
+			if (!ReadRows(text, current, delimiter))
 				return false;
 			return true;
 		}
 
-		std::string_view m_text;
-		std::string_view::const_iterator m_current;
 		VectorTableData m_tableData;
 		StringIndexMap m_columnMap;
 		StringIndexMap m_rowMap;
 		bool m_error = false;
-		size_t m_numColumns = 0;
-		size_t m_numRows = 0;
-		char m_delimiter = 0;
-
 	};
 
 }
