@@ -12,7 +12,7 @@ using String = Tbl::Table<>::String;
 
 TEST_CASE("Test Tables", "[Tables]")
 {
-	
+
     SECTION("Tab-Delimited Table Test")
     {
 		static const char * tableText =
@@ -58,7 +58,7 @@ TEST_CASE("Test Tables", "[Tables]")
 		REQUIRE(t.Get<String>("Test Name C", "Text Field") == "Even more tests of text");
 
 	}
-
+	
 	SECTION("Comma-Delimited Table Test")
 	{
 		static const char * tableText =
@@ -130,7 +130,7 @@ TEST_CASE("Test Tables", "[Tables]")
 		REQUIRE(t.GetNumColumns() == 4);
 		REQUIRE(t.GetNumRows() == 3);
 	}
-	
+
 	SECTION("Test Table No End-Line")
 	{
 		static const char * tableText =
@@ -144,7 +144,7 @@ TEST_CASE("Test Tables", "[Tables]")
 		REQUIRE(t.GetNumRows() == 1);
 		REQUIRE(t.Get<String>("Test Name", "Text Field") == "Do you read me?");
 	}
-
+	
 /*
     SECTION("Comma-Delimited Table With Commas")
     {
