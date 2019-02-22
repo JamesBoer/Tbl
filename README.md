@@ -8,7 +8,7 @@ The Tbl library is distributed as a single header file, Tbl.hpp, so you can incl
 Table is explicitly designed for game development or similar scenarios, where the table data is fixed by designers and only needs static verification.  Exceptions are not explicitly used, and runtime parameter errors will either assert or set an error flag.  It also allows the user to supply a custom allocator, as this is a common requirement for many games.
 
 ## What is Tbl Used For?
-The Tbl library is designed to read tabular spreadsheet data that has been exported to a text format.  Two common formats are CSV (Comma Separated Values) and tab-delimited text files.  The library automatically determines the correct file format when parsing it.
+The Tbl library is designed to read tabular spreadsheet data that has been exported to a text format.  Two common formats are CSV (Comma Separated Values) and tab-delimited text files.  The library automatically determines the correct file format when parsing it.  Tbl also correctly handles double-quote escaping, meaning that, for example, you can safely add commas in text fields without problems even when exporting to CSV.
 
 These values are typically exported from a spreadsheet containing a table, which may look something like the following:
 

@@ -205,22 +205,40 @@ namespace Tbl
 			return str;
 		}
 
-		String ParseCell(std::string_view text, char delimiter, std::string_view::const_iterator& current)
+		String ParseCell(std::string_view text, char delimiter, std::string_view::const_iterator& current) const
 		{
-			// First check if this cell is double-quoted.  If so, we ignore
-			// delimiters until another stand-alone double-quote is found.
-			// Note that double-quotes can be "escaped" with a pair of double-quotes
-			// as well, so after the first quote, we check for that too.
-
-			//bool quoted = *current == '"';
+			// Check if this cell is double-quoted
+			bool quoted = *current == '"';
+			if (quoted)
+				++current;
 
 			String str;
 			while (current != text.end())
 			{
-				// Check for breaking delimiters
 				const char c = *current;
-				if (c == delimiter || IsLineEnd(current))
-					break;
+				if (quoted)
+				{
+					// Since this cell is double-quote delimited, proceed without checking delimiters until
+					// we see another double quote character.  
+					if (c == '"')
+					{
+						// Advance the iterator and check to see if it's followed by the end of file or
+						// delimiters.  If so, we're done parsing.  If not, a second double-quote should
+						// follow.
+						++current;
+						if (current == text.end() || *current == delimiter || IsLineEnd(current))
+							break;
+						// If this assert hits, your data is malformed, since an interior double-quote was not
+						// followed by a second quote
+						assert(*current == '"');
+					}
+				}
+				else
+				{
+					// This isn't a quote-escaped cell, so long for normal delimiters
+					if (c == delimiter || IsLineEnd(current))
+						break;
+				}
 				str += c;
 				++current;
 			}
