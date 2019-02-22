@@ -214,56 +214,84 @@ namespace Tbl
 #endif
         }
 
-		bool ReadRow()
+		void ParseData(const String& str)
 		{
-			// Read the row header (first column)
-			size_t column = 0;
-			auto begin = m_current;
-			while (m_current != m_text.end())
+			int64_t intValue = 0;
+			if (ParseInteger(str, intValue))
+				m_tableData.push_back(intValue);
+			else
 			{
-				const char c = *m_current;
-				if (c == m_delimiter)
-				{
-					// Add the first column as a lookup for the row number
-					String rowName(begin, m_current);
-					m_rowMap.insert({ rowName, m_numRows });
-					++m_numRows;
-					++m_current;
-					++column;
-					begin = m_current;
-
-					// We also store it as the first element of the row
-					m_tableData.push_back(rowName);
-					break;
-				}
+				double doubleValue = 0.0;
+				if (ParseDouble(str, doubleValue))
+					m_tableData.push_back(doubleValue);
 				else
-					++m_current;
+					m_tableData.push_back(str);
 			}
+		}
+/*
+		bool ParseQuotes()
+		{
+			++current;
 
-			// Read the rest of the row
+			// Check for another quote immediately after first
+			if (m_current != m_text.end() && *current == '"')
+			{
+
+			}
 			while (m_current != m_text.end())
 			{
 				const char c = *m_current;
-				if (c == m_delimiter || c == '\n' || c == '\r')
+				++current;
+				if (c == '"')
 				{
-					String str(begin, m_current);
-					int64_t intValue = 0;
-                    if (ParseInteger(str, intValue))
-					{
-						m_tableData.push_back(intValue);
-					}
 					else
 					{
-						double doubleValue = 0.0;
-                        if (ParseDouble(str, doubleValue))
-						{
-							m_tableData.push_back(doubleValue);
-						}
-						else
-						{
-							m_tableData.push_back(str);
-						}
+
 					}
+				}
+			}
+			return false;
+		}
+*/
+		bool ReadRow()
+		{
+			// Read the row data
+			size_t column = 0;
+			auto begin = m_current;
+
+			// Make sure we don't parse past the end of the string data
+			while (m_current != m_text.end())
+			{
+				// Check for breaking delimiters
+				const char c = *m_current;
+/*
+				// Quotes are special, so parse them if we run into any
+				if (c == '"')
+				{
+					if (!ParseQuotes())
+						return false;
+				}
+*/
+				// Check for delimiter character or line break
+				if (c == m_delimiter || c == '\n' || c == '\r')
+				{
+					// Get the current string to be processed
+					String str(begin, m_current);
+
+					// Anything past the first column is normal data
+					if (column > 0)
+						ParseData(str);
+					// The first column is assumed to be text data
+					// as well as a unique row identifier
+					else
+					{
+						m_rowMap.insert({ str, m_numRows });
+						m_tableData.push_back(str);
+						++m_numRows;
+					}
+
+					// If the character is the data delimiter, we have
+					// more data to parse in this row
 					if (c == m_delimiter)
 					{
 						++m_current;
@@ -272,6 +300,7 @@ namespace Tbl
 						if (column > m_numColumns)
 							return false;
 					}
+					// Otherwise, advance to the next row
 					else
 					{
 						AdvanceToNextLine();
@@ -282,6 +311,12 @@ namespace Tbl
 					++m_current;
 			}
 
+			// Catch if the table data ends without a newline
+			if (m_current == m_text.end() && column < m_numColumns)
+			{
+				String str(begin, m_current);
+				ParseData(str);
+			}
 			return true;
 		}
 

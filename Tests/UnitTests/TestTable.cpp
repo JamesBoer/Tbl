@@ -12,6 +12,7 @@ using String = Tbl::Table<>::String;
 
 TEST_CASE("Test Tables", "[Tables]")
 {
+	
     SECTION("Tab-Delimited Table Test")
     {
 		static const char * tableText =
@@ -129,4 +130,51 @@ TEST_CASE("Test Tables", "[Tables]")
 		REQUIRE(t.GetNumColumns() == 4);
 		REQUIRE(t.GetNumRows() == 3);
 	}
+	
+	SECTION("Test Table No End-Line")
+	{
+		static const char * tableText =
+			"Name Field\tText Field\n"
+			"Test Name\tDo you read me?"
+			;
+
+		Table t(tableText);
+		REQUIRE(t);
+		REQUIRE(t.GetNumColumns() == 2);
+		REQUIRE(t.GetNumRows() == 1);
+		REQUIRE(t.Get<String>("Test Name", "Text Field") == "Do you read me?");
+	}
+
+/*
+    SECTION("Comma-Delimited Table With Commas")
+    {
+		static const char * tableText =
+			"Name Field,Text Field\n"
+			"Test Name A,\"Test 1, 2, 3\"\n"
+			"Test Name B,Test 4\n"
+			;
+
+		Table t(tableText);
+        REQUIRE(t);
+		REQUIRE(t.GetNumColumns() == 2);
+		REQUIRE(t.GetNumRows() == 2);
+		REQUIRE(t.Get<String>("Test Name A", "Text Field") == "Test 1, 2, 3");
+		REQUIRE(t.Get<String>("Test Name B", "Text Field") == "Test 4");
+	}
+*/
+/*
+	SECTION("Comma-Delimited Table With Quotes")
+	{
+		static const char * tableText =
+			"Name Field,Text Field\n"
+			"Test Name B,\"\"\"Quoted text\"\"\""
+			;
+
+		Table t(tableText);
+		REQUIRE(t);
+		REQUIRE(t.GetNumColumns() == 2);
+		REQUIRE(t.GetNumRows() == 3);
+		REQUIRE(t.Get<String>("Test Name A", "Text Field") == "Test 1, Test 2, Test 3");
+	}
+*/
 }
