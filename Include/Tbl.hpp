@@ -96,7 +96,7 @@ namespace Tbl
 			assert(pair != m_columnMap.end());
 			return pair->second;
 		}
-		TableData GetData(size_t rowIndex, size_t columnIndex)
+		const TableData& GetData(size_t rowIndex, size_t columnIndex) const
 		{
 			assert(!m_error);
 			assert(rowIndex < GetNumRows());
@@ -105,17 +105,17 @@ namespace Tbl
 			assert(index < m_tableData.size());
 			return m_tableData[index];
 		}
-		TableData GetData(const String& rowName, const String& columnName)
+		const TableData& GetData(const String& rowName, const String& columnName) const
 		{
 			return GetData(GetRowIndex(rowName), GetColumnIndex(columnName));
 		}
 		template <typename T>
-		T Get(size_t rowIndex, size_t columnIndex)
+		const T& Get(size_t rowIndex, size_t columnIndex) const
 		{
 			return std::get<T>(GetData(rowIndex, columnIndex));
 		}
 		template <typename T>
-		T Get(const String& rowName, const String& columnName)
+		const T& Get(const String& rowName, const String& columnName) const
 		{
 			return std::get<T>(GetData(GetRowIndex(rowName), GetColumnIndex(columnName)));
 		}
@@ -159,7 +159,7 @@ namespace Tbl
 			return true;
 		}
 
-        bool ParseInteger(const String& str, int64_t& intValue)
+        bool ParseInteger(const String& str, int64_t& intValue) const
         {
 #ifdef USE_FROM_CHARS
             auto result = std::from_chars(str.data(), str.data() + str.size(), intValue);
@@ -175,7 +175,7 @@ namespace Tbl
 #endif
         }
 
-        bool ParseDouble(const String& str, double& doubleValue)
+        bool ParseDouble(const String& str, double& doubleValue) const
         {
 #ifdef USE_FROM_CHARS
             auto result = std::from_chars(str.data(), str.data() + str.size(), doubleValue);
@@ -191,7 +191,7 @@ namespace Tbl
 #endif
         }
 
-		TableData ParseData(const String& str)
+		TableData ParseData(const String& str) const
 		{
 			int64_t intValue = 0;
 			if (ParseInteger(str, intValue))
@@ -235,7 +235,7 @@ namespace Tbl
 				}
 				else
 				{
-					// This isn't a quote-escaped cell, so long for normal delimiters
+					// This isn't a quote-escaped cell, so check for normal delimiters
 					if (c == delimiter || IsLineEnd(current))
 						break;
 				}
@@ -263,8 +263,6 @@ namespace Tbl
 		{
 			// Track column data
 			size_t column = 0;
-
-			// Make sure we don't parse past the end of the string data
 			while (current != text.end())
 			{
 				auto str = ParseCell(text, delimiter, current);
