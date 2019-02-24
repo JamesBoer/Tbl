@@ -1,0 +1,4 @@
+Name Field;Integer Field;Float Field;Text Field
+Test Name A;1;4,5;This is a simple test.
+Test Name B;2;123,456;More to test...
+Test Name C;3;22,3345;Even more tests of text

@@ -48,10 +48,11 @@ THE SOFTWARE.
 #include <string_view>
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
 #ifdef USE_FROM_CHARS
 #include <charconv>
 #else
-#include <cstdlib>
+#include <sstream>
 #endif
 
 #ifdef TBL_WINDOWS
@@ -84,13 +85,13 @@ namespace Tbl
 
 		size_t GetNumColumns() const { return m_columnMap.size(); }
 		size_t GetNumRows() const { return m_rowMap.size(); }
-		size_t GetRowIndex(const String& rowName) const
+		size_t GetRowIndex(const String & rowName) const
 		{
 			const auto& pair = m_rowMap.find(rowName);
 			assert(pair != m_rowMap.end());
 			return pair->second;
 		}
-		size_t GetColumnIndex(const String& columnName) const
+		size_t GetColumnIndex(const String & columnName) const
 		{
 			const auto& pair = m_columnMap.find(columnName);
 			assert(pair != m_columnMap.end());
@@ -105,29 +106,35 @@ namespace Tbl
 			assert(index < m_tableData.size());
 			return m_tableData[index];
 		}
-		const TableData& GetData(const String& rowName, const String& columnName) const
+		const TableData& GetData(const String & rowName, const String & columnName) const
 		{
 			return GetData(GetRowIndex(rowName), GetColumnIndex(columnName));
 		}
 		template <typename T>
-		const T& Get(size_t rowIndex, size_t columnIndex) const
+		const T & Get(size_t rowIndex, size_t columnIndex) const
 		{
 			return std::get<T>(GetData(rowIndex, columnIndex));
 		}
 		template <typename T>
-		const T& Get(const String& rowName, const String& columnName) const
+		const T & Get(const String & rowName, const String & columnName) const
 		{
 			return std::get<T>(GetData(GetRowIndex(rowName), GetColumnIndex(columnName)));
 		}
 
 	private:
 
+		enum class Format
+		{
+			International,
+			Continental
+		};
+
 		bool IsLineEnd(std::string_view::const_iterator current) const
 		{
 			return *current == '\n' || *current == '\r';
 		}
 
-		void AdvanceToNextLine(std::string_view text, std::string_view::const_iterator& current) const
+		void AdvanceToNextLine(std::string_view text, std::string_view::const_iterator & current) const
 		{
 			while (current != text.end())
 			{
@@ -137,29 +144,33 @@ namespace Tbl
 			}
 		}
 
-		bool DetectDelimiter(std::string_view text, char& delimiter) const
+		bool DetectDelimiter(std::string_view text, char & delimiter, Format & format) const
 		{
 			size_t tabCount = 0;
 			size_t commaCount = 0;
+			size_t semicolonCount = 0;
 			auto current = text.begin();
 			while (current != text.end())
 			{
 				const char c = *current;
-				if (c == '\t')
-					++tabCount;
-				else if (c == ',')
+				if (c == ',')
 					++commaCount;
+				else if (c == '\t')
+					++tabCount;
+				else if (c == ';')
+					++semicolonCount;
 				else if (IsLineEnd(current))
 					break;
 				++current;
 			}
-			if (tabCount == commaCount)
+			if (tabCount == 0 && commaCount == 0 && semicolonCount == 0)
 				return false;
-			delimiter = tabCount > commaCount ? '\t' : ',';
+			delimiter = (commaCount >= tabCount) ? ((commaCount > semicolonCount) ? ',' : ';') : '\t';
+			format = delimiter == ';' ? Format::Continental : Format::International;
 			return true;
 		}
 
-        bool ParseInteger(const String& str, int64_t& intValue) const
+        bool ParseInteger(const String & str, int64_t& intValue) const
         {
 #ifdef USE_FROM_CHARS
             auto result = std::from_chars(str.data(), str.data() + str.size(), intValue);
@@ -175,23 +186,49 @@ namespace Tbl
 #endif
         }
 
-        bool ParseDouble(const String& str, double& doubleValue) const
+        bool ParseDouble(const String & str, double & doubleValue, Format format) const
         {
 #ifdef USE_FROM_CHARS
-            auto result = std::from_chars(str.data(), str.data() + str.size(), doubleValue);
-            if (result.ptr == str.data() + str.size())
-                return true;
+			// In case contintental format is used, replace commas with decimal point
+			if (format == Format::Continental)
+			{
+				String s = str;
+				std::replace(s.begin(), s.end(), ',', '.');
+				auto result = std::from_chars(s.data(), s.data() + s.size(), doubleValue);
+				if (result.ptr == s.data() + s.size())
+					return true;
+			}
+			else
+			{
+				auto result = std::from_chars(str.data(), str.data() + str.size(), doubleValue);
+				if (result.ptr == str.data() + str.size())
+					return true;
+			}
             return false;
 #else
-            char * endPtr;
-            doubleValue = strtod(str.data(), &endPtr);
-            if (endPtr != (str.data() + str.size()))
-                return false;
+			if (format == Format::Continental)
+			{
+				String s = str;
+				std::replace(s.begin(), s.end(), ',', '.');
+				std::istringstream istr(s);
+				istr.imbue(std::locale::classic());
+				istr >> doubleValue;
+				if (istr.fail())
+					return false;
+			}
+			else
+			{
+				std::istringstream istr(str.c_str());
+				istr.imbue(std::locale::classic());
+				istr >> doubleValue;
+				if (istr.fail())
+					return false;
+			}
             return true;
 #endif
         }
 
-		TableData ParseData(const String& str) const
+		TableData ParseData(const String & str, Format format) const
 		{
 			int64_t intValue = 0;
 			if (ParseInteger(str, intValue))
@@ -199,13 +236,13 @@ namespace Tbl
 			else
 			{
 				double doubleValue = 0.0;
-				if (ParseDouble(str, doubleValue))
+				if (ParseDouble(str, doubleValue, format))
 					return doubleValue;
 			}
 			return str;
 		}
 
-		String ParseCell(std::string_view text, char delimiter, std::string_view::const_iterator& current) const
+		String ParseCell(std::string_view text, char delimiter, std::string_view::const_iterator & current) const
 		{
 			// Check if this cell is double-quoted
 			bool quoted = *current == '"';
@@ -219,7 +256,7 @@ namespace Tbl
 				if (quoted)
 				{
 					// Since this cell is double-quote delimited, proceed without checking delimiters until
-					// we see another double quote character.  
+					// we see another double quote character.
 					if (c == '"')
 					{
 						// Advance the iterator and check to see if it's followed by the end of file or
@@ -245,7 +282,7 @@ namespace Tbl
 			return str;
 		}
 
-		bool ReadHeader(std::string_view text, std::string_view::const_iterator& current, char delimiter)
+		bool ReadHeader(std::string_view text, std::string_view::const_iterator & current, char delimiter)
 		{
 			while (current != text.end())
 			{
@@ -259,7 +296,7 @@ namespace Tbl
 			return true;
 		}
 
-		bool ReadRow(std::string_view text, std::string_view::const_iterator& current, char delimiter)
+		bool ReadRow(std::string_view text, std::string_view::const_iterator & current, char delimiter, Format format)
 		{
 			// Track column data
 			size_t column = 0;
@@ -272,7 +309,7 @@ namespace Tbl
 					m_tableData.push_back(str);
 				}
 				else
-					m_tableData.push_back(ParseData(str));
+					m_tableData.push_back(ParseData(str, format));
 				++column;
 				if (current == text.end() || IsLineEnd(current))
 					break;
@@ -282,11 +319,11 @@ namespace Tbl
 			return column == GetNumColumns();
 		}
 
-		bool ReadRows(std::string_view text, std::string_view::const_iterator& current, char delimiter)
+		bool ReadRows(std::string_view text, std::string_view::const_iterator & current, char delimiter, Format format)
 		{
 			while (current != text.end())
 			{
-				if (!ReadRow(text, current, delimiter))
+				if (!ReadRow(text, current, delimiter, format))
 					return false;
 			}
 			return true;
@@ -295,12 +332,13 @@ namespace Tbl
 		bool Read(std::string_view text)
 		{
 			char delimiter = 0;
-			if (!DetectDelimiter(text, delimiter))
+			Format format = Format::International;
+			if (!DetectDelimiter(text, delimiter, format))
 				return false;
 			std::string_view::const_iterator current = text.begin();
 			if (!ReadHeader(text, current, delimiter))
 				return false;
-			if (!ReadRows(text, current, delimiter))
+			if (!ReadRows(text, current, delimiter, format))
 				return false;
 			return true;
 		}
