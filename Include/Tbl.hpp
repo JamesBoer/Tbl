@@ -48,6 +48,7 @@ THE SOFTWARE.
 #include <string_view>
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
 #ifdef USE_FROM_CHARS
 #include <charconv>
 #else
@@ -255,7 +256,7 @@ namespace Tbl
 				if (quoted)
 				{
 					// Since this cell is double-quote delimited, proceed without checking delimiters until
-					// we see another double quote character.  
+					// we see another double quote character.
 					if (c == '"')
 					{
 						// Advance the iterator and check to see if it's followed by the end of file or
