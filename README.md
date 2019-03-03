@@ -23,39 +23,51 @@ Table is explicitly designed for game development or similar scenarios, where th
 ## How to Use Tbl
 The Tbl library consists of a single class, called ```Table```.  Let's load up our sample CVS file first.
 
-    std::ifstream f("Test1.cvs");
-    std::stringstream buffer;
-    buffer << f.rdbuf();
+``` c++
+std::ifstream f("Test1.cvs");
+std::stringstream buffer;
+buffer << f.rdbuf();
+```    
     
 Now, we instantiate a table with the loaded string data, and check that it parsed correctly.
 
-    Table t(buffer.str());
-    if (!t)
-       // handle error
-       
+``` c++
+Table t(buffer.str());
+if (!t)
+   // handle error
+```
+
 The table has been parsed and organized, so now let's access some of the data.  First, there are members to tell us the number of columns and rows in the table.  
 
-    size_t columns = t.GetNumColumns();
-    size_t rows = t.GetNumRows();
-    
+``` c++
+size_t columns = t.GetNumColumns();
+size_t rows = t.GetNumRows();
+```
+
 Let's say we want to get a specific table cell by index values.  You can do so as follows.  Remember, the header doesn't count, and the indices are zero-based, so this is retrieving row 3, column D of the spreadsheet table.  The following code will return the string "More to test..."  
 
-    auto str = t.Get<std::string>(1, 3);
-    
+``` c++
+auto str = t.Get<std::string>(1, 3);
+```
+
 Perhaps even more useful is being able to retrieve values by name instead of by index numbers.  This not only more intuitive, but protects you from future modifications.  For instance, even if you insert a new column or row, the named values will remain valid.  Let's see how this looks with our last example.
 
-    auto str = t.Get<std::string>("Test Name B", "Text Field")
-    
+``` c++
+auto str = t.Get<std::string>("Test Name B", "Text Field")
+```
+
 Similarly, you can use ```int64_t``` or ```double``` in the same way to retrieve integer or double values from appropriate fields.
 
 If you wish to mix index and name-based lookups, you can use the member functions ```GetRowIndex()``` or ```GetColumnIndex()``` and pass the value to the index-based ```Get()``` function.
 
 It's generally expected that you will know which types of data are found in a given column.  In case this isn't so, you can retrieve the ```std::variant``` directly using the ```GetData()``` member function and query the variant's index value for the type, then use ```std::get``` to retrieve the value.  It might look something like this:
 
-    auto var = t.GetData("Test Name B", "Text Field");
-    if (var.index == 2)
-        auto str = std::get<std::string>(var);
-        
+``` c++
+auto var = t.GetData("Test Name B", "Text Field");
+if (var.index == 2)
+    auto str = std::get<std::string>(var);
+```
+
 When checking the variant index value, 0 is ```int64_t```, 1 is ```double```, and 2 is ```std::string```.
 
 
