@@ -18,7 +18,7 @@ std::string LoadTestData(const char* filename)
 #ifdef TBL_WINDOWS
 	std::string filePath = std::string("../../../Data/") + std::string(filename);
 #else
-	std::string filePath = std::string("../../../../Data/" + std::string(filename);
+	std::string filePath = std::string("../../../../Data/") + std::string(filename);
 #endif
 
 	std::ifstream f(filePath);
