@@ -209,11 +209,7 @@ TEST_CASE("Test Tables", "[Tables]")
 
 	SECTION("Tab-Delimited Table Test From File 1")
 	{
-#ifdef TBL_WINDOWS
-		auto tableText = LoadTestData("../../../Data/Test1.txt");
-#else
-		auto tableText = LoadTestData("../../../../Data/Test1.txt");
-#endif
+		auto tableText = LoadTestData("Test1.txt");
 		Table t(tableText);
 		REQUIRE(t);
 		REQUIRE(t.GetNumColumns() == 4);
@@ -222,11 +218,7 @@ TEST_CASE("Test Tables", "[Tables]")
 
 	SECTION("Comma-Delimited Table Test From File 1")
 	{
-#ifdef TBL_WINDOWS
-		auto tableText = LoadTestData("../../../Data/Test1.csv");
-#else
-		auto tableText = LoadTestData("../../../../Data/Test1.csv");
-#endif
+		auto tableText = LoadTestData("Test1.csv");
 		Table t(tableText);
 		REQUIRE(t);
 		REQUIRE(t.GetNumColumns() == 4);
@@ -235,11 +227,7 @@ TEST_CASE("Test Tables", "[Tables]")
 
 	SECTION("Tab-Delimited Table Test From File 2")
 	{
-#ifdef TBL_WINDOWS
-		auto tableText = LoadTestData("../../../Data/Test2.txt");
-#else
-		auto tableText = LoadTestData("../../../../Data/Test2.txt");
-#endif
+		auto tableText = LoadTestData("Test2.txt");
 		Table t(tableText);
 		REQUIRE(t);
 		REQUIRE(t.GetNumColumns() == 2);
@@ -251,11 +239,7 @@ TEST_CASE("Test Tables", "[Tables]")
 
 	SECTION("Comma-Delimited Table Test From File 2")
 	{
-#ifdef TBL_WINDOWS
-		auto tableText = LoadTestData("../../../Data/Test2.csv");
-#else
-		auto tableText = LoadTestData("../../../../Data/Test2.csv");
-#endif
+		auto tableText = LoadTestData("Test2.csv");
 		Table t(tableText);
 		REQUIRE(t);
 		REQUIRE(t.GetNumColumns() == 2);
@@ -267,11 +251,7 @@ TEST_CASE("Test Tables", "[Tables]")
 
 	SECTION("Semicolon-Delimited Table Test From File 3")
 	{
-#ifdef TBL_WINDOWS
-		auto tableText = LoadTestData("../../../Data/Test3.csv");
-#else
-		auto tableText = LoadTestData("../../../../Data/Test3.csv");
-#endif
+		auto tableText = LoadTestData("Test3.csv");
 		Table t(tableText);
 		REQUIRE(t);
 		REQUIRE(t.GetNumColumns() == 4);

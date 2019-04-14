@@ -15,7 +15,13 @@ using namespace Tbl;
 
 std::string LoadTestData(const char* filename)
 {
-	std::ifstream f(filename);
+#ifdef TBL_WINDOWS
+	std::string filePath = std::string("../../../Data/") + std::string(filename);
+#else
+	std::string filePath = std::string("../../../../Data/") + std::string(filename);
+#endif
+
+	std::ifstream f(filePath);
 	std::stringstream buffer;
 	buffer << f.rdbuf();
 	return buffer.str();
