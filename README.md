@@ -21,10 +21,10 @@ The Tbl library is distributed as a single header file, Tbl.hpp, so you can incl
 Table is explicitly designed for game development or similar scenarios, where the table data is fixed by designers and only needs static verification.  Exceptions are not explicitly used, and runtime parameter errors will either assert or set an error flag.  It also allows the client application to supply a custom allocator, as this is a common requirement for many games.
 
 ## How to Use Tbl
-The Tbl library consists of a single class, called ```Table```.  Let's load up our sample CVS file first.
+The Tbl library consists of a single class, called ```Table```.  Let's load up our sample CSV file first.
 
 ``` c++
-std::ifstream f("Test1.cvs");
+std::ifstream f("Test1.csv");
 std::stringstream buffer;
 buffer << f.rdbuf();
 ```    
@@ -47,13 +47,13 @@ size_t rows = t.GetNumRows();
 Let's say we want to get a specific table cell by index values.  You can do so as follows.  Remember, the header doesn't count, and the indices are zero-based, so this is retrieving row 3, column D of the spreadsheet table.  The following code will return the string "More to test..."  
 
 ``` c++
-auto str = t.Get<std::string>(1, 3);
+std::string s = t.Get<std::string>(1, 3);
 ```
 
 Perhaps even more useful is being able to retrieve values by name instead of by index numbers.  This not only more intuitive, but protects you from future modifications.  For instance, even if you insert a new column or row, the named values will remain valid.  Let's see how this looks with our last example.
 
 ``` c++
-auto str = t.Get<std::string>("Test Name B", "Text Field")
+std::string s = t.Get<std::string>("Test Name B", "Text Field")
 ```
 
 Similarly, you can use ```int64_t``` or ```double``` in the same way to retrieve integer or double values from appropriate fields.
@@ -64,10 +64,10 @@ It's generally expected that you will know which types of data are found in a gi
 
 ``` c++
 auto var = t.GetData("Test Name B", "Text Field");
-if (var.index == 2)
+if (var.index() == StringType)
     auto str = std::get<std::string>(var);
 ```
 
-When checking the variant index value, 0 is ```int64_t```, 1 is ```double```, and 2 is ```std::string```.
+When checking the variant index value, there are three constants to check against: ```IntType```, ```DoubleType```, and ```StringType```, which correspond to index values of 0, 1 and 2 respectively.
 
 
