@@ -62,6 +62,12 @@ THE SOFTWARE.
 namespace Tbl
 {
 
+	// Type indices for TableData variant
+	const size_t IntType = 0;
+	const size_t DoubleType = 1;
+	const size_t StringType = 2;
+
+	// Table class reads and parses CSV or tab-delimited text
 	template<typename Alloc = std::allocator<char>>
 	class Table
 	{
@@ -208,10 +214,10 @@ namespace Tbl
 #else
 			if (format == Format::Continental)
 			{
-				String s = str;
-				std::replace(s.begin(), s.end(), ',', '.');
-				std::istringstream istr(s);
-				istr.imbue(std::locale::classic());
+				std::istringstream istr(str);
+				// We arbitrarily pick German locale since it is known to use commas
+				// as numeric decimal points.
+				istr.imbue(std::locale("de_DE.UTF-8"));
 				istr >> doubleValue;
 				if (istr.fail())
 					return false;

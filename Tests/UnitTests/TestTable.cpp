@@ -280,4 +280,23 @@ TEST_CASE("Test Tables", "[Tables]")
 		REQUIRE(t.Get<double>("Test Name C", "Float Field") == Approx(22.3345));
 	}
 
+	SECTION("Comma-Delimited Table Test Using Type Query")
+	{
+		static const char * tableText =
+			"Name Field,Integer Field,Float Field,Text Field\n"
+			"Test Name A,1,4.5,This is a simple test.\n"
+			;
+
+		Table t(tableText);
+		REQUIRE(t);
+		REQUIRE(t.GetNumColumns() == 4);
+		REQUIRE(t.GetNumRows() == 1);
+		auto v1 = t.GetData(0, 1);
+		auto v2 = t.GetData(0, 2);
+		auto v3 = t.GetData(0, 3);
+		REQUIRE(v1.index() == IntType);
+		REQUIRE(v2.index() == DoubleType);
+		REQUIRE(v3.index() == StringType);
+	}
+
 }
