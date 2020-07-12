@@ -214,10 +214,10 @@ namespace Tbl
 #else
 			if (format == Format::Continental)
 			{
-				std::istringstream istr(str);
-				// We arbitrarily pick German locale since it is known to use commas
-				// as numeric decimal points.
-				istr.imbue(std::locale("de_DE.UTF-8"));
+				String s = str;
+				std::replace(s.begin(), s.end(), ',', '.');
+				std::istringstream istr(s.c_str());
+				istr.imbue(std::locale::classic());
 				istr >> doubleValue;
 				if (istr.fail())
 					return false;
