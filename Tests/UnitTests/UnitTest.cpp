@@ -22,6 +22,8 @@ std::string LoadTestData(const char* filename)
 #endif
 
 	std::ifstream f(filePath);
+	if (!f)
+		f.open(std::string("../Data/") + std::string(filename));
 	std::stringstream buffer;
 	buffer << f.rdbuf();
 	return buffer.str();

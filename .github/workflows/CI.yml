@@ -36,7 +36,7 @@ jobs:
 
     # Run unit tests
     - name: Run unit tests
-      run: ./../Build/Release/Tests/UnitTests/UnitTests.exe
+      run: ./../Build/Tests/UnitTests/Release/UnitTests.exe
 
   build_macos:
     # The type of runner that the job will run on
