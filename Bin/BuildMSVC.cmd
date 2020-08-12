@@ -9,7 +9,7 @@ goto ERROR
 
 cd Build
 
-MSBuild Jinx.sln /p:Configuration=Debug && (
+MSBuild Tbl.sln /p:Configuration=Debug && (
   echo Debug build succeeded
 ) || (
   echo Debug build failed
