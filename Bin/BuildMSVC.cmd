@@ -16,7 +16,7 @@ MSBuild Jinx.sln /p:Configuration=Debug && (
   goto ERROR
 )
 
-MSBuild Jinx.sln /p:Configuration=Release && (
+MSBuild Tbl.sln /p:Configuration=Release && (
   echo Release build succeeded
 ) || (
   echo Release build failed
