@@ -1,4 +1,4 @@
-# Tbl ![CI](https://github.com/JamesBoer/Jinx/workflows/CI/badge.svg)
+# Tbl ![CI](https://github.com/JamesBoer/Tbl/workflows/CI/badge.svg)
 Tbl is a lightweight CSV (comma separated value) and tab-delimited table reader.  If you pass the Table object a properly formatted string, you can then retrieve integer, double, or string values either by index number or name.
 
 ## What is Tbl Used For?
